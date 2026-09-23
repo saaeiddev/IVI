@@ -3,7 +3,7 @@ import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { Html, OrbitControls, useGLTF, useProgress } from '@react-three/drei';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import * as THREE from 'three';
-import { computeTelemetry, useSim, type Panel, type View } from './simulation';
+import { useSim, type Panel, type View } from './simulation';
 import { translate } from './translations';
 
 const ASSET=`${import.meta.env.BASE_URL}assets/vehicle.glb`;

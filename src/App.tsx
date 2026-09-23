@@ -2,7 +2,7 @@ import React,{useCallback,useEffect,useMemo,useState} from 'react';
 import {
  Activity, AlertTriangle, ArrowLeftRight, BatteryCharging, CarFront, CheckCircle2, ChevronRight,
  CircleDot, Disc3, ExternalLink, Gauge, Globe2, Lightbulb, Menu, Power, Radar,
- RotateCcw, ScanLine, Settings2, ShieldCheck, SlidersHorizontal, Thermometer, Wrench, X, Zap
+ RotateCcw, ScanLine, Settings2, ShieldCheck, SlidersHorizontal, Thermometer, X, Zap
 } from 'lucide-react';
 import VehicleScene from './VehicleScene';
 import {diagnose,severityOf, type Severity} from './diagnostics';

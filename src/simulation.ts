@@ -59,7 +59,7 @@ export function simulateStep(s:SimState,seconds:number):SimState {
   const speed=clamp(s.speed+(acceleration-braking-2.3-s.speed*.075)*dt,0,245);
   const t=computeTelemetry({...s,speed});
   const target=s.engineOn?(s.scenario==='overheat'?130:s.scenario==='cooling'?124:86+t.rpm/950):24;
-  const coolantTemp=clamp(s.coolantTemp+(target-s.coolantTemp)*dt*((s.scenario==='overheat'||s.scenario==='cooling')?.23:.085),20,150);
+  const coolantTemp=clamp(s.coolantTemp+(target-s.coolantTemp)*dt*((s.scenario==='overheat'||s.scenario==='cooling') ? .23 : .085),20,150);
   const brakeTemp=clamp(s.brakeTemp+(s.brake*speed*.31-(s.brakeTemp-32)*.075)*dt,25,650);
   return {...s,speed,coolantTemp,brakeTemp,
     distance:s.distance+speed*dt/3600,
@@ -83,7 +83,7 @@ export const useSim=create<SimStore>()((set,get)=>({
   setView:view=>set({view}),
   setWheel:wheel=>set(s=>({wheel:clamp(Math.round(wheel),0,3),panel:s.panel==='tires'?'tires':'brakes',view:'brakes'})),
   setScenario:scenario=>set(s=>({...s,scenario,
-    coolantTemp:scenario==='overheat'||scenario==='cooling'?105:scenario==='normal'?Math.min(s.coolantTemp,90):s.coolantTemp,
+    coolantTemp:scenario==='overheat'||scenario==='cooling'?116:scenario==='normal'?Math.min(s.coolantTemp,90):s.coolantTemp,
     padWear:scenario==='wornBrakes'?92:24,
     tirePressure:scenario==='lowTire'?[1.5,2.4,2.4,2.4]:[2.4,2.4,2.4,2.4],
     scanCount:0})),

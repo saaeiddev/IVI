@@ -7,7 +7,7 @@ export function diagnose(state:SimState,telemetry:Telemetry=computeTelemetry(sta
  if(state.scenario==='cooling') findings.push({id:'cooling',code:'SIM-P0480',severity:'critical',title:'diagCooling',description:'diagCoolingDesc',action:'diagCoolingAction',component:'cooling'});
  if(telemetry.padWear>=80) findings.push({id:'brakes',code:'SIM-MAINT-01',severity:telemetry.padWear>=90?'critical':'warning',title:'diagBrakes',description:'diagBrakesDesc',action:'diagBrakesAction',component:'brakes'});
  if(telemetry.tirePressure.some(x=>x<1.9)) findings.push({id:'tire',code:'SIM-TPMS-01',severity:'warning',title:'diagTire',description:'diagTireDesc',action:'diagTireAction',component:'tires'});
- if(telemetry.batteryVoltage<12) findings.push({id:'battery',code:'SIM-P0562',severity:'warning',title:'diagBattery',description:'diagBatteryDesc',action:'diagBatteryAction',component:'battery'});
+ if(telemetry.batteryVoltage<12||telemetry.batteryHealth<50) findings.push({id:'battery',code:'SIM-P0562',severity:'warning',title:'diagBattery',description:'diagBatteryDesc',action:'diagBatteryAction',component:'battery'});
  if(telemetry.sensorFault) findings.push({id:'sensor',code:'SIM-P0101',severity:'warning',title:'diagSensor',description:'diagSensorDesc',action:'diagSensorAction',component:'engine'});
  return findings.length?findings:[{id:'clear',code:'SIM-OK',severity:'ok',title:'diagClear',description:'diagClearDesc',action:'diagClearAction',component:'overview'}];
 }
