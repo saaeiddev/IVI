@@ -36,7 +36,7 @@ function CameraRig({view,wheel,resetNonce}:{view:View;wheel:number;resetNonce:nu
  const destination=useRef({position:new THREE.Vector3(6,3.3,7.2),target:new THREE.Vector3(0,.85,0)});
  useEffect(()=>{
   const poses:Record<View,{pos:number[];target:number[]}> = {
-   exterior:{pos:[6,3.3,7.2],target:[0,.85,0]},
+   exterior:{pos:[3.7,2.25,4.6],target:[0,.85,0]},
    interior:{pos:[.15,1.75,-.13],target:[0,1.25,2.6]},
    engine:{pos:[3.35,3.7,4.4],target:[0,1.0,1.65]},
    brakes:{pos:[wheel%2===0?3.1:-3.1,1.65,wheel<2?2.75:-2.75],target:[wheel%2===0?1.07:-1.07,.48,wheel<2?1.52:-1.53]}
@@ -172,24 +172,23 @@ function CarModel({onReady,onSelect}:ModelProps){
     <span className="hotspot-pin"/> {translate(language,label)}
    </button>
   </Html>;
- return <group rotation={[-Math.PI/2,0,0]} onClick={onCarClick}>
+ return <group onClick={onCarClick}>
   <primitive object={scene} dispose={null}/>
   {showHotspots&&<>
-   {hotspot('engine',[0,-1.75,1.15],'engine')}
-   {hotspot('frontLeft',[1.1,-1.58,.71],'brakes',0)}
-   {hotspot('frontRight',[-1.1,-1.58,.71],'brakes',1)}
-   {hotspot('rearLeft',[1.1,1.44,.71],'tires',2)}
-   {hotspot('battery',[-.65,-.55,1.42],'battery')}
-   {hotspot('doors',[1.3,-.4,1.38],'doors')}
+   {hotspot('engine',[0,1.15,1.75],'engine')}
+   {hotspot('frontLeft',[1.1,.71,1.58],'brakes',0)}
+   {hotspot('frontRight',[-1.1,.71,1.58],'brakes',1)}
+   {hotspot('rearLeft',[1.1,.71,-1.44],'tires',2)}
+   {hotspot('doors',[1.3,1.38,.4],'doors')}
   </>}
  </group>;
 }
 function clonedMaterials(map:Map<string,THREE.Material[]>) {return Array.from(map.values()).flat();}
 function Ground(){return <mesh receiveShadow rotation={[-Math.PI/2,0,0]} position={[0,-.045,0]}>
- <planeGeometry args={[200,200]}/><meshStandardMaterial color="#111d2d" roughness={.65} metalness={.25}/>
+ <planeGeometry args={[200,200]}/><meshStandardMaterial color="#040c17" roughness={.88} metalness={.05}/>
  </mesh>}
-function Loader(){const {progress}=useProgress();const language=useSim(s=>s.language);return <Html center><div className="scene-loader">
- <div className="loader-ring"/><strong>{translate(language,'loadTitle')}</strong><span>{Math.round(progress)}%</span></div></Html>}
+function Loader(){const {progress}=useProgress();const language=useSim(s=>s.language);return <div className="scene-loader">
+ <div className="loader-ring"/><strong>{translate(language,'loadTitle')}</strong><span>{Math.round(progress)}%</span></div>}
 class ModelBoundary extends React.Component<{children:React.ReactNode;onError:()=>void},{failed:boolean}>{
  state={failed:false};
  static getDerivedStateFromError(){return {failed:true};}
@@ -202,14 +201,14 @@ export default function VehicleScene({onReady,onSelect,resetNonce}:SceneProps){
  useEffect(()=>{try{const canvas=document.createElement('canvas');setSupported(Boolean(canvas.getContext('webgl2')||canvas.getContext('webgl')))}catch{setSupported(false)}},[]);
  const quality=graphics==='high'?2:graphics==='balanced'?1:typeof window!=='undefined'&&window.innerWidth<700?1:1.6;
  return <div className="vehicle-canvas">
-  {supported&&!error?<Canvas shadows={graphics!=='balanced'} dpr={[1,quality]} camera={{position:[6,3.3,7.2],fov:39,near:.05,far:130}} gl={{alpha:true,antialias:graphics!=='balanced',powerPreference:'high-performance'}} frameloop="always">
+  {supported&&!error?<Canvas shadows={graphics!=='balanced'} dpr={[1,quality]} camera={{position:[3.7,2.25,4.6],fov:39,near:.05,far:130}} gl={{alpha:true,antialias:graphics!=='balanced',powerPreference:'high-performance'}} frameloop="always">
    <StudioEnvironment/><Ground/><CameraRig view={view} wheel={wheel} resetNonce={resetNonce}/>
-   <Suspense fallback={<Loader/>}>
+   <Suspense fallback={null}>
     <ModelBoundary onError={()=>setError(true)}><CarModel onReady={()=>{setReady(true);onReady()}} onSelect={onSelect}/></ModelBoundary>
    </Suspense>
   </Canvas>:<div className="scene-error" role="alert"><strong>{translate(language,supported?'loadError':'webglError')}</strong>
    {supported&&<button className="button-main" type="button" onClick={()=>window.location.reload()}>{translate(language,'retry')}</button>}</div>}
-  {!ready&&!error&&supported&&<div className="viewer-wait">{translate(language,'loadDesc')}</div>}
+  {!ready&&!error&&supported&&<div className="viewer-loading"><Loader/></div>}
   <div className="viewer-vignette" aria-hidden="true"/>
  </div>;
 }
