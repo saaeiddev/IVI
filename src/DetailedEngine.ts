@@ -115,7 +115,7 @@ export function createDetailedEngine(): THREE.Group {
   for(let i=0;i<6;i++) rounded(engine,'EngineAirFilterFin',[.665,.205+i*.032,.345],[.01,.012,.142],alloy,.004);
 
   // Front accessory drive: machined pulleys, belt, ventilated alternator and fan.
-  const front = mount(engine,new THREE.Group(),'EngineFrontAccessoryAssembly',[0,-.39,.025]);
+  const front = mount(engine,new THREE.Group(),'EngineFrontAccessoryAssembly',[0,-.315,.025]);
   for(const [i,x,z,r] of [[0,0,-.027,.118],[1,-.28,.145,.076],[2,.265,.155,.075],[3,.02,.275,.063]] as number[][]) {
     const rotor = mount(front,new THREE.Group(),'EngineAccessoryRotor',[x,0,z]);
     const wheel = cylinder(rotor,'EngineMachinedPulley',[0,-.018,0],r,.038,darkMetal,38);
