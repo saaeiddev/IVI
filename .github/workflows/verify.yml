@@ -15,7 +15,7 @@ jobs:
           node-version: '22'
       - name: Install dependencies
         run: npm install --no-audit --no-fund
-      - name: Download licensed GLB
+      - name: Download car and reference engine GLBs
         run: npm run assets
       - name: Verify simulation
         run: npm test
@@ -34,6 +34,7 @@ jobs:
       - name: Check bundled model and entry point
         run: |
           test -s dist/assets/vehicle.glb
+          test -s dist/assets/engine.glb
           test -s dist/index.html
           grep -q '/IVI/' dist/index.html
       - name: Verify live GitHub Pages and 3D model
@@ -43,4 +44,5 @@ jobs:
           curl --fail --location --silent --show-error --retry 12 --retry-all-errors --retry-delay 10 https://saaeiddev.github.io/IVI/ --output /tmp/ivi-live.html
           grep -q '/IVI/assets/' /tmp/ivi-live.html
           curl --fail --location --silent --show-error --retry 8 --retry-all-errors --retry-delay 10 --head https://saaeiddev.github.io/IVI/assets/vehicle.glb
+          curl --fail --location --silent --show-error --retry 8 --retry-all-errors --retry-delay 10 --head https://saaeiddev.github.io/IVI/assets/engine.glb
           echo "Public site and licensed 3D asset respond successfully"
