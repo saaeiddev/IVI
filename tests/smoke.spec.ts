@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test('desktop: 3D model, telemetry, faults and bilingual UI', async ({ page }) => {
   const errors: string[] = [];
-  page.on('pageerror', error => errors.push(error.message));
+  page.on('pageerror', error => errors.push(error.stack??error.message));
   const response = await page.goto('/IVI/', { waitUntil: 'domcontentloaded', timeout: 90_000 });
   expect(response?.status()).toBe(200);
   await expect(page.locator('.hero-heading h1')).toContainText('CONCEPT GT');
@@ -27,7 +27,7 @@ test('mobile: touch interface, navigation, diagnostic interactions', async ({ br
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
   const page = await context.newPage();
   const errors: string[] = [];
-  page.on('pageerror', error => errors.push(error.message));
+  page.on('pageerror', error => errors.push(error.stack??error.message));
   const response = await page.goto('/IVI/', { waitUntil: 'domcontentloaded', timeout: 90_000 });
   expect(response?.status()).toBe(200);
   await expect(page.locator('.hero-heading h1')).toBeVisible();
