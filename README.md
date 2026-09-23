@@ -13,13 +13,15 @@ npm run build
 npm run preview
 ```
 
-Open the local Vite URL. A missing model produces an explicit error; the project **never** substitutes a primitive placeholder. The engine model is a single static mesh in the licensed asset; internal pistons and crankshaft, and the suspension internals, are **not** falsely animated. The complete licensed asset includes separate opening panels, detailed brake meshes, interior and actual headlight/taillight materials. Click the car, the hotspot labels, or use navigation to inspect those supported parts. Use mouse/touch orbit and pinch zoom.
+Open the local Vite URL. A missing model produces an explicit error; the project **never** substitutes a primitive placeholder. The original licensed asset includes a coarse single-mesh engine, now hidden in favor of an **original high-detail V8-style external mechanical assembly** (two four-cylinder banks, eight intake runners, eight exhaust headers, ignition coils, fuel rails, alternator, machined pulleys, serpentine belt, rotating fan and cooling hoses). Internal pistons and crankshaft, and suspension internals, are **not** falsely animated. The complete licensed asset includes separate opening panels, detailed brake meshes, interior and actual headlight/taillight materials. Click the car, the hotspot labels, or use navigation to inspect those supported parts. Use mouse/touch orbit and pinch zoom.
 
 ## Architecture
 
 - `src/simulation.ts`: centralized deterministic simulation state, dynamics and scenario overrides.
 - `src/diagnostics.ts`: reproducible rule-based faults, severity and maintenance advice (not generative AI).
 - `src/VehicleScene.tsx`: licensed GLB loader, mesh-level picking, real panel/wheel/light animations and camera presets.
+- `src/DetailedEngine.ts`: custom external V8-style engine model, rear/windshield-side hood hinge, synchronized accessory rotors and dynamically extending hood struts.
+- `src/hoodRig.test.ts`: checks preserved hood closed-pose alignment, positive nose lift, engine components and telescoping struts.
 - `src/translations.ts`: EN/FA UI, descriptive and diagnostic translations.
 - `src/App.tsx`: telemetry, simulation controls, diagnostics, mobile UI and inspector.
 
@@ -33,4 +35,4 @@ The GitHub Actions workflow runs `npm install`, fetches + validates the full-siz
 
 ## Scope and fidelity
 
-Door, hood and hatch transforms use the supplied GLB pivots, while wheels, steering wheel, lighting materials and detailed brake-disc/pad meshes are model-backed. All readings and diagnostic codes are deterministic **simulations**, not OEM specifications. The asset does not provide independent piston, crankshaft, hydraulic, charging-system or suspension subassemblies, so those are explained through synchronized telemetry and clearly marked as non-visualized. No paid or unlicensed models, fake AI diagnosis or static screenshot substitutes are used.
+Doors and hatch use the supplied GLB pivots. The **hood uses a corrected windshield-side hinge** with intact original painted geometry, opening upward, plus two animated telescoping gas struts. Wheels, steering wheel, lighting materials and detailed brake-disc/pad meshes remain model-backed. All readings and diagnostic codes are deterministic **simulations**, not OEM specifications. The asset does not provide independent piston, crankshaft, hydraulic or suspension subassemblies, so those are explained through synchronized telemetry and clearly marked as non-visualized. The detailed engine is an original visualization assembled from external mechanical geometry, **not** a downloaded OEM engine or proof of a real vehicle diagnosis. No paid or unlicensed models, fake AI diagnosis or static screenshot substitutes are used.
