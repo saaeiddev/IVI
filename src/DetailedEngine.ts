@@ -206,3 +206,66 @@ export function attachRearHoodHinge(scene: THREE.Object3D): THREE.Group | null {
   hinge.attach(hood);
   return hinge;
 }
+
+
+/**
+ * Telescoping gas struts couple the inner fenders to the moving hood.
+ * Both ends update from the authored hood transform, so they cannot float
+ * disconnected when the lid swings open.
+ */
+export function installHoodStruts(scene: THREE.Object3D): void {
+  const chassis=scene.getObjectByName('BodyUnderside');
+  if(!chassis||chassis.getObjectByName('IVI_HoodStrut_L'))return;
+  const matte=new THREE.MeshStandardMaterial({color:'#1c242b',metalness:.53,roughness:.57});
+  const chrome=new THREE.MeshStandardMaterial({color:'#c5ccd4',metalness:.94,roughness:.19});
+  const bolt=new THREE.MeshStandardMaterial({color:'#5e6a73',metalness:.83,roughness:.31});
+  for(const [side,name] of [[-1,'L'],[1,'R']] as const){
+    const strut=new THREE.Group();
+    strut.name='IVI_HoodStrut_'+name;
+    strut.userData.side=side;
+    const body=new THREE.Mesh(new THREE.CylinderGeometry(.022,.025,1,12),matte);
+    body.name='HoodStrutCylinder';
+    const rod=new THREE.Mesh(new THREE.CylinderGeometry(.009,.009,1,12),chrome);
+    rod.name='HoodStrutRod';
+    const base=new THREE.Mesh(new THREE.SphereGeometry(.034,12,8),bolt);
+    base.name='HoodStrutBase';
+    const top=new THREE.Mesh(new THREE.SphereGeometry(.029,12,8),bolt);
+    top.name='HoodStrutTip';
+    for(const part of [body,rod,base,top]){
+      part.castShadow=true;
+      strut.add(part);
+    }
+    chassis.add(strut);
+  }
+}
+
+const STRUT_AXIS=new THREE.Vector3(0,1,0);
+export function updateHoodStruts(scene: THREE.Object3D, hoodOpen: boolean): void {
+  const hood=scene.getObjectByName('BodyHood');
+  const chassis=scene.getObjectByName('BodyUnderside');
+  if(!hood||!chassis)return;
+  // Called after the damped hinge transform, before the Three.js scene render.
+  hood.updateWorldMatrix(true,true);
+  chassis.updateWorldMatrix(true,false);
+  for(const [side,name] of [[-1,'L'],[1,'R']] as const){
+    const strut=chassis.getObjectByName('IVI_HoodStrut_'+name);
+    if(!strut)continue;
+    strut.visible=hoodOpen;
+    if(!hoodOpen)continue;
+    const from=new THREE.Vector3(side*.78,-1.49,.45);
+    const to=chassis.worldToLocal(hood.localToWorld(new THREE.Vector3(side*.76,.72,.30)));
+    const delta=to.clone().sub(from);
+    const length=delta.length();
+    if(length<.05)continue;
+    strut.position.copy(from);
+    strut.quaternion.setFromUnitVectors(STRUT_AXIS,delta.normalize());
+    const body=strut.getObjectByName('HoodStrutCylinder') as THREE.Mesh;
+    const rod=strut.getObjectByName('HoodStrutRod') as THREE.Mesh;
+    const tip=strut.getObjectByName('HoodStrutTip') as THREE.Mesh;
+    body.position.y=length*.30;
+    body.scale.y=length*.60;
+    rod.position.y=length*.76;
+    rod.scale.y=length*.48;
+    tip.position.y=length;
+  }
+}
