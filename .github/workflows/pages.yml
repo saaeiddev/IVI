@@ -23,7 +23,7 @@ jobs:
           node-version: '22'
       - name: Install dependencies
         run: npm install --no-audit --no-fund
-      - name: Download and validate licensed 3D vehicle
+      - name: Download and validate car and reference engine GLBs
         run: npm run assets
       - name: Unit tests
         run: npm test
@@ -32,6 +32,7 @@ jobs:
       - name: Validate deployed bundle
         run: |
           test -s dist/assets/vehicle.glb
+          test -s dist/assets/engine.glb
           test -s dist/index.html
           grep -q '/IVI/assets/' dist/index.html || grep -q '/IVI/' dist/index.html
       - uses: actions/configure-pages@v5
@@ -47,3 +48,4 @@ jobs:
           curl --fail --location --silent --show-error --retry 12 --retry-all-errors --retry-delay 10 https://saaeiddev.github.io/IVI/ --output /tmp/ivi.html
           grep -q '/IVI/assets/' /tmp/ivi.html
           curl --fail --location --silent --show-error --retry 8 --retry-all-errors --retry-delay 10 --head https://saaeiddev.github.io/IVI/assets/vehicle.glb
+          curl --fail --location --silent --show-error --retry 8 --retry-all-errors --retry-delay 10 --head https://saaeiddev.github.io/IVI/assets/engine.glb
