@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
-import { Html, OrbitControls, useGLTF, useProgress } from '@react-three/drei';
+import { Html, OrbitControls, useGLTF } from '@react-three/drei';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import * as THREE from 'three';
 import { useSim, type Panel, type View } from './simulation';
@@ -33,10 +33,10 @@ function CameraRig({view,wheel,resetNonce}:{view:View;wheel:number;resetNonce:nu
  const {camera}=useThree();
  const controls=useRef<Controls>(null);
  const moving=useRef(false);
- const destination=useRef({position:new THREE.Vector3(6,3.3,7.2),target:new THREE.Vector3(0,.85,0)});
+ const destination=useRef({position:new THREE.Vector3(4.7,2.55,5.7),target:new THREE.Vector3(0,.85,0)});
  useEffect(()=>{
   const poses:Record<View,{pos:number[];target:number[]}> = {
-   exterior:{pos:[6,3.3,7.2],target:[0,.85,0]},
+   exterior:{pos:[4.7,2.55,5.7],target:[0,.85,0]},
    interior:{pos:[.15,1.75,-.13],target:[0,1.25,2.6]},
    engine:{pos:[3.35,3.7,4.4],target:[0,1.0,1.65]},
    brakes:{pos:[wheel%2===0?3.1:-3.1,1.65,wheel<2?2.75:-2.75],target:[wheel%2===0?1.07:-1.07,.48,wheel<2?1.52:-1.53]}
@@ -192,8 +192,6 @@ function clonedMaterials(map:Map<string,THREE.Material[]>) {return Array.from(ma
 function Ground(){return <mesh receiveShadow rotation={[-Math.PI/2,0,0]} position={[0,-.045,0]}>
  <planeGeometry args={[28,28]}/><meshStandardMaterial color="#080e18" roughness={1} metalness={0}/>
  </mesh>}
-function Loader(){const {progress}=useProgress();const language=useSim(s=>s.language);return <Html center><div className="scene-loader">
- <div className="loader-ring"/><strong>{translate(language,'loadTitle')}</strong><span>{Math.round(progress)}%</span></div></Html>}
 class ModelBoundary extends React.Component<{children:React.ReactNode;onError:()=>void},{failed:boolean}>{
  state={failed:false};
  static getDerivedStateFromError(){return {failed:true};}
@@ -206,9 +204,9 @@ export default function VehicleScene({onReady,onSelect,resetNonce}:SceneProps){
  useEffect(()=>{try{const canvas=document.createElement('canvas');setSupported(Boolean(canvas.getContext('webgl2')||canvas.getContext('webgl')))}catch{setSupported(false)}},[]);
  const quality=graphics==='high'?2:graphics==='balanced'?1:typeof window!=='undefined'&&window.innerWidth<700?1:1.6;
  return <div className="vehicle-canvas">
-  {supported&&!error?<Canvas shadows={graphics!=='balanced'} dpr={[1,quality]} camera={{position:[6,3.3,7.2],fov:39,near:.05,far:130}} gl={{alpha:true,antialias:graphics!=='balanced',powerPreference:'high-performance'}} frameloop="always">
+  {supported&&!error?<Canvas shadows={graphics!=='balanced'} dpr={[1,quality]} camera={{position:[4.7,2.55,5.7],fov:39,near:.05,far:130}} gl={{alpha:true,antialias:graphics!=='balanced',powerPreference:'high-performance'}} frameloop="always">
    <StudioEnvironment/><Ground/><CameraRig view={view} wheel={wheel} resetNonce={resetNonce}/>
-   <Suspense fallback={<Loader/>}>
+   <Suspense fallback={null}>
     <ModelBoundary onError={()=>setError(true)}><CarModel onReady={()=>{setReady(true);onReady()}} onSelect={onSelect}/></ModelBoundary>
    </Suspense>
   </Canvas>:<div className="scene-error" role="alert"><strong>{translate(language,supported?'loadError':'webglError')}</strong>
