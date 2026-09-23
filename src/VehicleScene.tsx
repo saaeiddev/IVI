@@ -5,7 +5,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import * as THREE from 'three';
 import { useSim, type Panel, type View } from './simulation';
 import { translate } from './translations';
-import { attachRearHoodHinge, createDetailedEngine, HOOD_OPEN_ANGLE } from './DetailedEngine';
+import { attachRearHoodHinge, createDetailedEngine, HOOD_OPEN_ANGLE, installHoodStruts, updateHoodStruts } from './DetailedEngine';
 
 const ASSET=`${import.meta.env.BASE_URL}assets/vehicle.glb`;
 const wheelNodes=['WheelFrontL','WheelFrontR','WheelRearL','WheelRearR'];
@@ -80,6 +80,7 @@ function CarModel({onReady,onSelect}:ModelProps){
   if(originalEngine)originalEngine.visible=false; // Original engine is a low-detail solid block.
   const chassis=scene.getObjectByName('BodyUnderside');
   if(chassis&&!chassis.getObjectByName('IVI_DetailedEngine'))chassis.add(createDetailedEngine());
+  installHoodStruts(scene);
   const map=new Map<string,{position:THREE.Vector3;rotation:THREE.Euler}>();
   scene.traverse(obj=>map.set(obj.uuid,{position:obj.position.clone(),rotation:obj.rotation.clone()}));
   return map;
@@ -96,6 +97,7 @@ function CarModel({onReady,onSelect}:ModelProps){
  const padWear=useSim(s=>s.padWear);
  const showHotspots=useSim(s=>s.showHotspots);
  const language=useSim(s=>s.language);
+ const view=useSim(s=>s.view);
  const setWheel=useSim(s=>s.setWheel);
  const setView=useSim(s=>s.setView);
  const actualLights=useRef<Map<string,THREE.Material[]>>(new Map());
@@ -142,6 +144,7 @@ function CarModel({onReady,onSelect}:ModelProps){
   animatePivot('BodyDoorLColor1','z',doors.left?.86:0);
   animatePivot('BodyDoorRColor1','z',doors.right?-.86:0);
   animatePivot('IVI_HoodWindshieldHinge','x',doors.hood?HOOD_OPEN_ANGLE:0);
+  updateHoodStruts(scene,doors.hood);
   if(s.engineOn){
    const accessorySpeed=(12+s.throttle*35)*delta;
    engineRotors.forEach((rotor,i)=>{rotor.rotation.y+=(i%2?-1:1)*(rotor.name==='EngineCoolingFan'?accessorySpeed*.65:accessorySpeed)});
@@ -190,9 +193,12 @@ function CarModel({onReady,onSelect}:ModelProps){
    const idx=match?(match[1]==='Front'?0:2)+(match[2]==='L'?0:1):0;
    setWheel(idx);onSelect(panel);
   } else {
+   const hoodWasOpen=useSim.getState().doors.hood;
    onSelect(panel);
    if(panel==='engine'){
-    if(hoodClicked)useSim.getState().toggleDoor('hood');
+    // The inspector opens a closed hood automatically. A tap on an already
+    // open hood should close it; do not immediately undo its first opening.
+    if(hoodClicked&&hoodWasOpen)useSim.getState().toggleDoor('hood');
     setView('engine');
    }
   }
@@ -213,12 +219,18 @@ function CarModel({onReady,onSelect}:ModelProps){
  return <group onClick={onCarClick}>
   <primitive object={scene} dispose={null}/>
   {showHotspots&&<group rotation={[-Math.PI/2,0,0]}>
-   {hotspot('engine',[0,-1.75,1.15],'engine')}
-   {hotspot('frontLeft',[1.1,-1.58,.71],'brakes',0)}
-   {hotspot('frontRight',[-1.1,-1.58,.71],'brakes',1)}
-   {hotspot('rearLeft',[1.1,1.44,.71],'tires',2)}
-   {hotspot('battery',[-.65,-.55,1.42],'battery')}
-   {hotspot('doors',[1.3,-.4,1.38],'doors')}
+   {view==='engine'&&doors.hood?<>
+    {hotspot('engineBanksTag',[.40,-1.87,.84],'engine')}
+    {hotspot('engineIntakeTag',[0,-1.94,.95],'engine')}
+    {hotspot('engineDriveTag',[-.35,-2.32,.63],'engine')}
+   </>:<>
+    {hotspot('engine',[0,-1.75,1.15],'engine')}
+    {hotspot('frontLeft',[1.1,-1.58,.71],'brakes',0)}
+    {hotspot('frontRight',[-1.1,-1.58,.71],'brakes',1)}
+    {hotspot('rearLeft',[1.1,1.44,.71],'tires',2)}
+    {hotspot('battery',[-.65,-.55,1.42],'battery')}
+    {hotspot('doors',[1.3,-.4,1.38],'doors')}
+   </>}
   </group>}
  </group>;
 }
