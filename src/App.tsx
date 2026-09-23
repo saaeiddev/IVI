@@ -1,4 +1,4 @@
-import {useCallback,useEffect,useMemo,useState} from 'react';
+import {useCallback,useEffect,useMemo,useState,type ReactNode} from 'react';
 import {
  Activity, AlertTriangle, ArrowLeftRight, BatteryCharging, CarFront, CheckCircle2, ChevronRight,
  CircleDot, Disc3, ExternalLink, Gauge, Globe2, Lightbulb, Menu, Power, Radar,
@@ -29,7 +29,7 @@ function SectionIcon({id,size=19}:{id:Panel;size?:number}){
   default:return <CarFront {...common}/>;
  }
 }
-function StatusTag({severity,children}:{severity:Severity;children:React.ReactNode}){
+function StatusTag({severity,children}:{severity:Severity;children:ReactNode}){
  return <span className={`status-tag ${severity}`}>{severity==='ok'?<CheckCircle2 size={13}/>:<AlertTriangle size={13}/>} {children}</span>;
 }
 function Stat({label,value,unit,flag}:{label:string;value:string|number;unit?:string;flag?:Severity}){
