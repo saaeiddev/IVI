@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { Html, OrbitControls, useGLTF, useProgress } from '@react-three/drei';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
@@ -69,7 +69,8 @@ function findPanel(name:string):Panel|null {
 }
 function CarModel({onReady,onSelect}:ModelProps){
  const {scene}=useGLTF(ASSET);
- const [time,setTime]=useState(0);
+ const readyCallback=useRef(onReady);
+ readyCallback.current=onReady;
  const initialTransforms=useMemo(()=>{
   const map=new Map<string,{position:THREE.Vector3;rotation:THREE.Euler}>();
   scene.traverse(obj=>map.set(obj.uuid,{position:obj.position.clone(),rotation:obj.rotation.clone()}));
@@ -97,9 +98,9 @@ function CarModel({onReady,onSelect}:ModelProps){
    map.set(name,cloned);
   });
   actualLights.current=map;
-  onReady();
+  readyCallback.current();
   return()=>{clonedMaterials(map).forEach(m=>m.dispose())};
- },[scene,onReady]);
+ },[scene]);
  useEffect(()=>{
   actualLights.current.forEach((mats,name)=>{
    const signal=lights.hazards||lights.leftSignal||lights.rightSignal;
@@ -117,7 +118,7 @@ function CarModel({onReady,onSelect}:ModelProps){
   actualLights.current.forEach((mats,name)=>{if(!/BrakePad/.test(name))return;mats.forEach(m=>{if('emissive' in m){const material=m as THREE.MeshStandardMaterial;material.emissive.set('#fa603d');material.emissiveIntensity=padWear>=80?.75:0;}})});
  },[padWear]);
  useFrame((state,delta)=>{
-  const s=useSim.getState(),t=computeTelemetry(s);
+  const s=useSim.getState();
   const smooth=(obj:THREE.Object3D,axis:'x'|'y'|'z',change:number,speed=6)=>{
    const original=initialTransforms.get(obj.uuid);
    if(!original)return;
@@ -151,9 +152,8 @@ function CarModel({onReady,onSelect}:ModelProps){
    const on=/Taillight/.test(name)?s.brake>.04:/Turnsignal/.test(name)?pulse&&(s.lights.hazards||s.lights.leftSignal||s.lights.rightSignal):false;
    mats.forEach(m=>{if('emissiveIntensity' in m)(m as THREE.MeshStandardMaterial).emissiveIntensity=on?3.5:.04;});
   });
-  if(t.rpm&&s.engineOn&&time===-1)setTime(0); // Keep the React inspection overlay independent of the render loop.
  });
- const onCarClick=(event:ThreeEvent<PointerEvent>)=>{
+ const onCarClick=(event:ThreeEvent<MouseEvent>)=>{
   if(event.delta>4)return; // Ignore orbital drags.
   let node:THREE.Object3D|null=event.object;
   let panel:Panel|null=null;
@@ -164,12 +164,12 @@ function CarModel({onReady,onSelect}:ModelProps){
    const name=node?.name??'';
    const match=name.match(/Wheel(Front|Rear)(L|R)/i);
    const idx=match?(match[1]==='Front'?0:2)+(match[2]==='L'?0:1):0;
-   setWheel(idx);setPanel(panel);
-  } else {setPanel(panel);if(panel==='engine')setView('engine');}
+   setWheel(idx);onSelect(panel);
+  } else {onSelect(panel);if(panel==='engine')setView('engine');}
  };
  const hotspot=(label:string,position:[number,number,number],panel:Panel,wheel?:number)=>
   <Html key={label} position={position} center distanceFactor={8} zIndexRange={[20,0]} style={{pointerEvents:'auto'}}>
-   <button type="button" className="model-hotspot" onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();if(wheel!==undefined){setWheel(wheel);setPanel(panel);}else{setPanel(panel);if(panel==='engine')setView('engine');}}}>
+   <button type="button" className="model-hotspot" onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();if(wheel!==undefined){setWheel(wheel);onSelect(panel);}else{onSelect(panel);if(panel==='engine')setView('engine');}}}>
     <span className="hotspot-pin"/> {translate(language,label)}
    </button>
   </Html>;

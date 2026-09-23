@@ -1,4 +1,4 @@
-import {useCallback,useEffect,useMemo,useState} from 'react';
+import React,{useCallback,useEffect,useMemo,useState} from 'react';
 import {
  Activity, AlertTriangle, ArrowLeftRight, BatteryCharging, CarFront, CheckCircle2, ChevronRight,
  CircleDot, Disc3, ExternalLink, Gauge, Globe2, Lightbulb, Menu, Power, Radar,
@@ -163,6 +163,7 @@ export default function App(){
  },[]);
  useEffect(()=>{document.documentElement.lang=s.language;document.documentElement.dir=s.language==='fa'?'rtl':'ltr'},[s.language]);
  const setPanel=(p:Panel)=>{s.setPanel(p);setMenuOpen(false)};
+ const markReady=useCallback(()=>setModelReady(true),[]);
  const selectView=(v:View)=>{s.setView(v);setResetNonce(n=>n+1)};
  const resetCamera=()=>{s.setView('exterior');setResetNonce(n=>n+1)};
  return <div className="app-shell" dir={s.language==='fa'?'rtl':'ltr'}>
@@ -183,7 +184,7 @@ export default function App(){
     <div className="workspace">
      <div className="left-workspace">
       <section className="viewer-card"><div className="viewer-top"><div className="view-meta"><span className="live-pip"/><strong>{t('explore')}</strong><small>GLTF / PBR / 3D</small></div><div className="viewer-actions"><button type="button" title={t('hotspots')} className={`icon-button ${s.showHotspots?'is-on':''}`} onClick={()=>s.setShowHotspots(!s.showHotspots)}><Radar size={17}/></button><button type="button" title={t('resetCamera')} className="icon-button" onClick={resetCamera}><RotateCcw size={17}/></button></div></div>
-       <VehicleScene onReady={useCallback(()=>setModelReady(true),[])} onSelect={setPanel} resetNonce={resetNonce}/>
+       <VehicleScene onReady={markReady} onSelect={setPanel} resetNonce={resetNonce}/>
        <div className="viewer-bottom"><div className="orbit-hint"><ArrowLeftRight size={15}/>{t('orbit')}<span className="hint-divider"/> {t('zoom')}</div><div className="model-status"><span className="model-status-dot"/>{modelReady?'3D READY':'3D LOADING'}</div></div>
       </section>
       <div className="camera-tabs"><div className="eyebrow">{t('view')}</div><div className="view-buttons">{(['exterior','interior','engine','brakes'] as View[]).map(v=><button aria-pressed={s.view===v} key={v} onClick={()=>selectView(v)} className={s.view===v?'active':''}><span>{t(v==='engine'?'engineView':v==='brakes'?'brakesView':v)}</span></button>)}</div></div>
