@@ -34,3 +34,10 @@ The GitHub Actions workflow runs `npm install`, fetches + validates the full-siz
 ## Scope and fidelity
 
 Door, hood and hatch transforms use the supplied GLB pivots, while wheels, steering wheel, lighting materials and detailed brake-disc/pad meshes are model-backed. All readings and diagnostic codes are deterministic **simulations**, not OEM specifications. The asset does not provide independent piston, crankshaft, hydraulic, charging-system or suspension subassemblies, so those are explained through synchronized telemetry and clearly marked as non-visualized. No paid or unlicensed models, fake AI diagnosis or static screenshot substitutes are used.
+
+
+## Interactive engine bay (reference CAD assembly)
+
+Selecting **Engine**, the 3D engine hotspot, or the **Engine bay** camera preset automatically raises the original model's hood using its existing hinge. The camera animates into the bay and a separate, detailed reference engine assembly loads lazily from `public/assets/engine.glb`. The car's minimal default engine block remains visible while the independent model loads; the detailed assembly replaces it once ready. Closing the hood hides the add-on engine and restores the original block. The reference model is centered and fitted to measured bounds, and its loaded state is exposed in the UI for acceptance testing.
+
+**Source and provenance:** `2CylinderEngine.glb` from Khronos [glTF Sample Models](https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/2CylinderEngine); original JT-to-COLLADA conversion courtesy **Okino Computer Graphics / Okino Polytrans**. This is an educational, generic **two-cylinder assembly**, *not* a genuine Concept GT production powertrain and not a claim of independent piston simulation. The source README does **not** state a precise reuse license; users intending commercial redistribution should obtain permission or replace the engine GLB with an explicitly licensed alternative. The separate car asset's CC BY 4.0 attribution remains unchanged.

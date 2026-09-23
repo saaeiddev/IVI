@@ -8,6 +8,15 @@ test('desktop: 3D model, telemetry, faults and bilingual UI', async ({ page }) =
   await expect(page.locator('.hero-heading h1')).toContainText('CONCEPT GT');
   await expect(page.locator('canvas')).toBeVisible();
   await expect(page.locator('.model-status')).toContainText('3D READY', { timeout: 90_000 });
+  // A real second GLB must load after the hood opens, without blanking the car.
+  await page.locator('.nav-list').getByRole('button', { name: 'Engine' }).click();
+  await expect(page.locator('.engine-asset-status')).toHaveText('ENGINE MODEL READY', {timeout:90_000});
+  await page.screenshot({path:'test-results/ivi-engine-bay-desktop.png'});
+  await expect(page.getByRole('button', {name:/Close Hood/i})).toBeVisible();
+  await page.getByRole('button', {name:/Close Hood/i}).click();
+  await expect(page.locator('.engine-asset-status')).toHaveCount(0);
+  await page.getByRole('button', {name:/Open Hood/i}).click();
+  await expect(page.locator('.engine-asset-status')).toHaveText('ENGINE MODEL READY');
   await page.getByRole('button', { name: /START ENGINE/ }).click();
   await expect(page.getByRole('button', { name: /STOP ENGINE/ })).toBeVisible();
   await page.getByRole('button', { name: 'Diagnostics' }).click();
@@ -33,6 +42,11 @@ test('mobile: touch interface, navigation, diagnostic interactions', async ({ br
   await expect(page.locator('.hero-heading h1')).toBeVisible();
   await expect(page.locator('canvas')).toBeVisible();
   await expect(page.locator('.model-status')).toContainText('3D READY', { timeout: 90_000 });
+  // Mobile visitors can access the bay and reveal the same independently loaded asset.
+  await page.locator('.hamburger').click();
+  await page.locator('.nav-list').getByRole('button', { name: 'Engine' }).click();
+  await expect(page.locator('.engine-asset-status')).toHaveText('ENGINE MODEL READY', {timeout:90_000});
+  await page.screenshot({path:'test-results/ivi-engine-bay-mobile.png'});
   await page.locator('.hamburger').click();
   await expect(page.locator('.sidebar')).toHaveClass(/open/);
   await page.getByRole('button', { name: 'Diagnostics' }).click();
