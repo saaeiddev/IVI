@@ -74,9 +74,11 @@ function Inspector(){
      <Stat label={t('engineTemp')} value={fmt(telemetry.engineTemp)} unit="°C" flag={coolingError?'critical':'ok'}/>
      <Stat label={t('oilPressure')} value={fmt(telemetry.oilPressure,1)} unit="bar"/><Stat label={t('coolantTemp')} value={fmt(telemetry.coolantTemp)} unit="°C"/></div>
     <div className="section-subtitle">{t('visualization')}</div><div className="capability"><CheckCircle2 size={16}/>{t('engineMesh')}</div>
+    <div className="section-subtitle">{t('engineAnatomy')}</div>
+    {(['engineBanks','engineIntake','engineExhaust','engineAccessories','engineCooling'] as const).map(part=><div className="capability" key={part}><CheckCircle2 size={15}/>{t(part)}</div>)}
     <div className="notice"><AlertTriangle size={17}/><span>{t('explodedUnavailable')}</span></div>
-    <button className="outline-button full" onClick={()=>s.toggleDoor('hood')}>{s.doors.hood?t('close'):t('open')} {t('hood')}</button>
-    <button className="outline-button full" onClick={()=>s.setView('engine')}>{t('engineView')} <ChevronRight size={16}/></button>
+    <button className="outline-button full" onClick={()=>{const opening=!s.doors.hood;s.toggleDoor('hood');if(opening)s.setView('engine')}}>{s.doors.hood?t('close'):t('open')} {t('hood')}</button>
+    <button className="outline-button full" onClick={()=>{if(!s.doors.hood)s.toggleDoor('hood');s.setView('engine')}}>{t('engineView')} <ChevronRight size={16}/></button>
    </>;
    case 'brakes':return <>
     <p className="inspector-description">{t('brakesDesc')}</p><div className="wheel-picker">{wheelNames.map((w,i)=><button aria-pressed={s.wheel===i} className={s.wheel===i?'active':''} key={w} onClick={()=>s.setWheel(i)}>{t(w)}</button>)}</div>
@@ -162,9 +164,9 @@ export default function App(){
   return()=>window.clearInterval(id);
  },[]);
  useEffect(()=>{document.documentElement.lang=s.language;document.documentElement.dir=s.language==='fa'?'rtl':'ltr'},[s.language]);
- const setPanel=(p:Panel)=>{s.setPanel(p);setMenuOpen(false)};
+ const setPanel=(p:Panel)=>{s.setPanel(p);if(p==='engine'&&!s.doors.hood)s.toggleDoor('hood');setMenuOpen(false)};
  const markReady=useCallback(()=>setModelReady(true),[]);
- const selectView=(v:View)=>{s.setView(v);setResetNonce(n=>n+1)};
+ const selectView=(v:View)=>{s.setView(v);if(v==='engine'&&!s.doors.hood)s.toggleDoor('hood');setResetNonce(n=>n+1)};
  const resetCamera=()=>{s.setView('exterior');setResetNonce(n=>n+1)};
  return <div className="app-shell" dir={s.language==='fa'?'rtl':'ltr'}>
   <aside className={`sidebar ${menuOpen?'open':''}`}>
