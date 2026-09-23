@@ -79,8 +79,8 @@ export type SimStore=SimState & SimActions;
 export const useSim=create<SimStore>()((set,get)=>({
   ...initial,
   setLanguage:language=>set({language}),
-  setPanel:panel=>set({panel,view:panel==='engine'?'engine':panel==='brakes'?'brakes':get().view}),
-  setView:view=>set({view}),
+  setPanel:panel=>set(s=>({panel,view:panel==='engine'?'engine':panel==='brakes'?'brakes':s.view,doors:panel==='engine'?{...s.doors,hood:true}:s.doors})),
+  setView:view=>set(s=>({view,doors:view==='engine'?{...s.doors,hood:true}:s.doors})),
   setWheel:wheel=>set(s=>({wheel:clamp(Math.round(wheel),0,3),panel:s.panel==='tires'?'tires':'brakes',view:'brakes'})),
   setScenario:scenario=>set(s=>({...s,scenario,
     coolantTemp:scenario==='overheat'||scenario==='cooling'?116:scenario==='normal'?Math.min(s.coolantTemp,90):s.coolantTemp,
