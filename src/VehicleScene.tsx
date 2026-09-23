@@ -5,6 +5,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import * as THREE from 'three';
 import { useSim, type Panel, type View } from './simulation';
 import { translate } from './translations';
+import { attachRearHoodHinge, createDetailedEngine, HOOD_OPEN_ANGLE } from './DetailedEngine';
 
 const ASSET=`${import.meta.env.BASE_URL}assets/vehicle.glb`;
 const wheelNodes=['WheelFrontL','WheelFrontR','WheelRearL','WheelRearR'];
@@ -38,7 +39,7 @@ function CameraRig({view,wheel,resetNonce}:{view:View;wheel:number;resetNonce:nu
   const poses:Record<View,{pos:number[];target:number[]}> = {
    exterior:{pos:[4.7,2.55,5.7],target:[0,.85,0]},
    interior:{pos:[.15,1.75,-.13],target:[0,1.25,2.6]},
-   engine:{pos:[3.35,3.7,4.4],target:[0,1.0,1.65]},
+   engine:{pos:[2.55,3.0,3.9],target:[0,.75,1.94]},
    brakes:{pos:[wheel%2===0?3.1:-3.1,1.65,wheel<2?2.75:-2.75],target:[wheel%2===0?1.07:-1.07,.48,wheel<2?1.52:-1.53]}
   };
   const pose=poses[view];
@@ -72,9 +73,23 @@ function CarModel({onReady,onSelect}:ModelProps){
  const readyCallback=useRef(onReady);
  readyCallback.current=onReady;
  const initialTransforms=useMemo(()=>{
+  // The supplied asset's hood pivot sits at the bumper. Re-parent it to a
+  // windshield-side hinge while preserving the original closed-pose geometry.
+  attachRearHoodHinge(scene);
+  const originalEngine=scene.getObjectByName('Engine');
+  if(originalEngine)originalEngine.visible=false; // Original engine is a low-detail solid block.
+  const chassis=scene.getObjectByName('BodyUnderside');
+  if(chassis&&!chassis.getObjectByName('IVI_DetailedEngine'))chassis.add(createDetailedEngine());
   const map=new Map<string,{position:THREE.Vector3;rotation:THREE.Euler}>();
   scene.traverse(obj=>map.set(obj.uuid,{position:obj.position.clone(),rotation:obj.rotation.clone()}));
   return map;
+ },[scene]);
+ const engineRotors=useMemo(()=>{
+  const moving:THREE.Object3D[]=[];
+  scene.getObjectByName('IVI_DetailedEngine')?.traverse(obj=>{
+   if(obj.name==='EngineAccessoryRotor'||obj.name==='EngineCoolingFan')moving.push(obj);
+  });
+  return moving;
  },[scene]);
  const doors=useSim(s=>s.doors);
  const lights=useSim(s=>s.lights);
@@ -126,7 +141,11 @@ function CarModel({onReady,onSelect}:ModelProps){
   const animatePivot=(name:string,axis:'x'|'y'|'z',angle:number)=>{const node=scene.getObjectByName(name);if(node)smooth(node,axis,angle)};
   animatePivot('BodyDoorLColor1','z',doors.left?.86:0);
   animatePivot('BodyDoorRColor1','z',doors.right?-.86:0);
-  animatePivot('BodyHood','x',doors.hood?-.87:0);
+  animatePivot('IVI_HoodWindshieldHinge','x',doors.hood?HOOD_OPEN_ANGLE:0);
+  if(s.engineOn){
+   const accessorySpeed=(12+s.throttle*35)*delta;
+   engineRotors.forEach((rotor,i)=>{rotor.rotation.y+=(i%2?-1:1)*(rotor.name==='EngineCoolingFan'?accessorySpeed*.65:accessorySpeed)});
+  }
   animatePivot('BodyRearPanelsColor1','x',doors.hatch?.91:0);
   animatePivot('InteriorSteeringCylinder','z',s.steering*.38);
   wheelNodes.forEach((name,i)=>{
@@ -156,7 +175,13 @@ function CarModel({onReady,onSelect}:ModelProps){
   if(event.delta>4)return; // Ignore orbital drags.
   let node:THREE.Object3D|null=event.object;
   let panel:Panel|null=null;
-  while(node&&node!==scene){panel=findPanel(node.name);if(panel)break;node=node.parent;}
+  let hoodClicked=false;
+  while(node&&node!==scene){
+   if(/^BodyHood/.test(node.name))hoodClicked=true;
+   panel=findPanel(node.name);
+   if(panel)break;
+   node=node.parent;
+  }
   if(!panel)return;
   event.stopPropagation();
   if(panel==='brakes'||panel==='tires'){
@@ -164,11 +189,20 @@ function CarModel({onReady,onSelect}:ModelProps){
    const match=name.match(/Wheel(Front|Rear)(L|R)/i);
    const idx=match?(match[1]==='Front'?0:2)+(match[2]==='L'?0:1):0;
    setWheel(idx);onSelect(panel);
-  } else {onSelect(panel);if(panel==='engine')setView('engine');}
+  } else {
+   onSelect(panel);
+   if(panel==='engine'){
+    if(hoodClicked)useSim.getState().toggleDoor('hood');
+    setView('engine');
+   }
+  }
  };
  const hotspot=(label:string,position:[number,number,number],panel:Panel,wheel?:number)=>
   <Html key={label} position={position} center distanceFactor={8} zIndexRange={[20,0]} style={{pointerEvents:'auto'}}>
-   <button type="button" className="model-hotspot" onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();if(wheel!==undefined){setWheel(wheel);onSelect(panel);}else{onSelect(panel);if(panel==='engine')setView('engine');}}}>
+   <button type="button" className="model-hotspot" onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();if(wheel!==undefined){setWheel(wheel);onSelect(panel);}else{onSelect(panel);if(panel==='engine'){
+     if(!useSim.getState().doors.hood)useSim.getState().toggleDoor('hood');
+     setView('engine');
+    }}}}>
     <span className="hotspot-pin"/> {translate(language,label)}
    </button>
   </Html>;
