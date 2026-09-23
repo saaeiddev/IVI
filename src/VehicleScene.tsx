@@ -172,21 +172,25 @@ function CarModel({onReady,onSelect}:ModelProps){
     <span className="hotspot-pin"/> {translate(language,label)}
    </button>
   </Html>;
- return <group rotation={[-Math.PI/2,0,0]} onClick={onCarClick}>
+ // The source GLB already rotates its root BodyUnderside node by -90 degrees
+ // around X to turn its authored Z-up geometry into glTF Y-up coordinates.
+ // Never rotate the entire imported scene again: that would stand the car
+ // on its nose and push it through the showroom floor.
+ return <group onClick={onCarClick}>
   <primitive object={scene} dispose={null}/>
-  {showHotspots&&<>
+  {showHotspots&&<group rotation={[-Math.PI/2,0,0]}>
    {hotspot('engine',[0,-1.75,1.15],'engine')}
    {hotspot('frontLeft',[1.1,-1.58,.71],'brakes',0)}
    {hotspot('frontRight',[-1.1,-1.58,.71],'brakes',1)}
    {hotspot('rearLeft',[1.1,1.44,.71],'tires',2)}
    {hotspot('battery',[-.65,-.55,1.42],'battery')}
    {hotspot('doors',[1.3,-.4,1.38],'doors')}
-  </>}
+  </group>}
  </group>;
 }
 function clonedMaterials(map:Map<string,THREE.Material[]>) {return Array.from(map.values()).flat();}
 function Ground(){return <mesh receiveShadow rotation={[-Math.PI/2,0,0]} position={[0,-.045,0]}>
- <planeGeometry args={[200,200]}/><meshStandardMaterial color="#111d2d" roughness={.65} metalness={.25}/>
+ <planeGeometry args={[28,28]}/><meshStandardMaterial color="#080e18" roughness={1} metalness={0}/>
  </mesh>}
 function Loader(){const {progress}=useProgress();const language=useSim(s=>s.language);return <Html center><div className="scene-loader">
  <div className="loader-ring"/><strong>{translate(language,'loadTitle')}</strong><span>{Math.round(progress)}%</span></div></Html>}
