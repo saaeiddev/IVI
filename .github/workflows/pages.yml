@@ -40,3 +40,10 @@ jobs:
           path: dist
       - id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify public site and licensed model
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --silent --show-error --retry 12 --retry-all-errors --retry-delay 10 https://saaeiddev.github.io/IVI/ --output /tmp/ivi.html
+          grep -q '/IVI/assets/' /tmp/ivi.html
+          curl --fail --location --silent --show-error --retry 8 --retry-all-errors --retry-delay 10 --head https://saaeiddev.github.io/IVI/assets/vehicle.glb
