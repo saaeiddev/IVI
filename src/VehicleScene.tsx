@@ -81,7 +81,6 @@ function CarModel({onReady,onSelect}:ModelProps){
  const padWear=useSim(s=>s.padWear);
  const showHotspots=useSim(s=>s.showHotspots);
  const language=useSim(s=>s.language);
- const setPanel=useSim(s=>s.setPanel);
  const setWheel=useSim(s=>s.setWheel);
  const setView=useSim(s=>s.setView);
  const actualLights=useRef<Map<string,THREE.Material[]>>(new Map());
