@@ -3,3 +3,9 @@
 /* Keep mobile-only controls genuinely hidden on desktop; the generic .icon-button is defined later. */
 @media(min-width:761px){.hamburger.icon-button,.mobile-close.icon-button{display:none}}
 .viewer-loading{position:absolute;inset:0;display:grid;place-items:center;z-index:4;pointer-events:none}.viewer-loading .scene-loader{margin:auto;max-width:calc(100% - 32px)}
+
+/* Independently loaded engine assembly: quiet status chip over the showroom. */
+.engine-asset-status{position:absolute;z-index:4;bottom:54px;left:50%;transform:translateX(-50%);max-width:calc(100% - 38px);white-space:nowrap;padding:8px 13px;border-radius:8px;border:1px solid #3c6e78;background:#0c2333e6;box-shadow:0 4px 24px #01091499;color:#abdcf1;font-size:10px;font-weight:700;letter-spacing:.06em;pointer-events:none;backdrop-filter:blur(13px)}
+.engine-asset-status.engine-ready{border-color:#418b78;color:#91f4d0;background:#10332ce0}
+.engine-asset-status.engine-error{border-color:#a05e51;color:#ffd0c4}
+@media(max-width:760px){.engine-asset-status{bottom:49px;font-size:9px;padding:7px 9px}}
