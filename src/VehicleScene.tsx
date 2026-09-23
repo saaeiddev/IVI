@@ -5,12 +5,13 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import * as THREE from 'three';
 import { useSim, type Panel, type View } from './simulation';
 import { translate } from './translations';
+import EngineModel from './EngineModel';
 
 const ASSET=`${import.meta.env.BASE_URL}assets/vehicle.glb`;
 const wheelNodes=['WheelFrontL','WheelFrontR','WheelRearL','WheelRearR'];
 type Controls=React.ElementRef<typeof OrbitControls>;
 interface SceneProps { onReady:()=>void; onSelect:(panel:Panel)=>void; resetNonce:number }
-interface ModelProps { onReady:()=>void; onSelect:(panel:Panel)=>void }
+interface ModelProps { onReady:()=>void; onSelect:(panel:Panel)=>void; engineReady:boolean; onEngineReady:()=>void; onEngineError:()=>void }
 
 function StudioEnvironment(){
  const {gl,scene}=useThree();
@@ -38,7 +39,7 @@ function CameraRig({view,wheel,resetNonce}:{view:View;wheel:number;resetNonce:nu
   const poses:Record<View,{pos:number[];target:number[]}> = {
    exterior:{pos:[4.7,2.55,5.7],target:[0,.85,0]},
    interior:{pos:[.15,1.75,-.13],target:[0,1.25,2.6]},
-   engine:{pos:[3.35,3.7,4.4],target:[0,1.0,1.65]},
+   engine:{pos:[2.05,2.45,3.55],target:[0,.64,1.83]},
    brakes:{pos:[wheel%2===0?3.1:-3.1,1.65,wheel<2?2.75:-2.75],target:[wheel%2===0?1.07:-1.07,.48,wheel<2?1.52:-1.53]}
   };
   const pose=poses[view];
@@ -67,7 +68,7 @@ function findPanel(name:string):Panel|null {
  if(/Steering|Axles/i.test(name))return 'suspension';
  return null;
 }
-function CarModel({onReady,onSelect}:ModelProps){
+function CarModel({onReady,onSelect,engineReady,onEngineReady,onEngineError}:ModelProps){
  const {scene}=useGLTF(ASSET);
  const readyCallback=useRef(onReady);
  readyCallback.current=onReady;
@@ -84,6 +85,13 @@ function CarModel({onReady,onSelect}:ModelProps){
  const setWheel=useSim(s=>s.setWheel);
  const setView=useSim(s=>s.setView);
  const actualLights=useRef<Map<string,THREE.Material[]>>(new Map());
+ useEffect(()=>{
+  // Remove the source car's basic 88-vertex block only when the detailed
+  // CAD engine has loaded. Keep it as a safe visual fallback while loading.
+  const basicEngine=scene.getObjectByName('Engine');
+  if(basicEngine)basicEngine.visible=!(doors.hood&&engineReady);
+  return ()=>{if(basicEngine)basicEngine.visible=true};
+ },[scene,doors.hood,engineReady]);
  useEffect(()=>{
   // Clone only affected materials. Preserve authored PBR materials, UVs and texture maps.
   const map=new Map<string,THREE.Material[]>();
@@ -126,7 +134,8 @@ function CarModel({onReady,onSelect}:ModelProps){
   const animatePivot=(name:string,axis:'x'|'y'|'z',angle:number)=>{const node=scene.getObjectByName(name);if(node)smooth(node,axis,angle)};
   animatePivot('BodyDoorLColor1','z',doors.left?.86:0);
   animatePivot('BodyDoorRColor1','z',doors.right?-.86:0);
-  animatePivot('BodyHood','x',doors.hood?-.87:0);
+  // The CAD hood pivot sits at the nose: positive rotation raises its rear edge.
+  animatePivot('BodyHood','x',doors.hood?1.04:0);
   animatePivot('BodyRearPanelsColor1','x',doors.hatch?.91:0);
   animatePivot('InteriorSteeringCylinder','z',s.steering*.38);
   wheelNodes.forEach((name,i)=>{
@@ -178,6 +187,11 @@ function CarModel({onReady,onSelect}:ModelProps){
  // on its nose and push it through the showroom floor.
  return <group onClick={onCarClick}>
   <primitive object={scene} dispose={null}/>
+  <Suspense fallback={null}>
+   <ModelBoundary onError={onEngineError}>
+    {doors.hood&&<EngineModel onReady={onEngineReady}/>}
+   </ModelBoundary>
+  </Suspense>
   {showHotspots&&<group rotation={[-Math.PI/2,0,0]}>
    {hotspot('engine',[0,-1.75,1.15],'engine')}
    {hotspot('frontLeft',[1.1,-1.58,.71],'brakes',0)}
@@ -199,19 +213,21 @@ class ModelBoundary extends React.Component<{children:React.ReactNode;onError:()
  render(){return this.state.failed?null:this.props.children;}
 }
 export default function VehicleScene({onReady,onSelect,resetNonce}:SceneProps){
- const view=useSim(s=>s.view),wheel=useSim(s=>s.wheel),language=useSim(s=>s.language),graphics=useSim(s=>s.graphics);
+ const view=useSim(s=>s.view),wheel=useSim(s=>s.wheel),language=useSim(s=>s.language),graphics=useSim(s=>s.graphics),hoodOpen=useSim(s=>s.doors.hood);
  const [ready,setReady]=useState(false),[error,setError]=useState(false),[supported,setSupported]=useState(true);
+ const [engineReady,setEngineReady]=useState(false),[engineError,setEngineError]=useState(false);
  useEffect(()=>{try{const canvas=document.createElement('canvas');setSupported(Boolean(canvas.getContext('webgl2')||canvas.getContext('webgl')))}catch{setSupported(false)}},[]);
  const quality=graphics==='high'?2:graphics==='balanced'?1:typeof window!=='undefined'&&window.innerWidth<700?1:1.6;
  return <div className="vehicle-canvas">
   {supported&&!error?<Canvas shadows={graphics!=='balanced'} dpr={[1,quality]} camera={{position:[4.7,2.55,5.7],fov:39,near:.05,far:130}} gl={{alpha:true,antialias:graphics!=='balanced',powerPreference:'high-performance'}} frameloop="always">
    <StudioEnvironment/><Ground/><CameraRig view={view} wheel={wheel} resetNonce={resetNonce}/>
    <Suspense fallback={null}>
-    <ModelBoundary onError={()=>setError(true)}><CarModel onReady={()=>{setReady(true);onReady()}} onSelect={onSelect}/></ModelBoundary>
+    <ModelBoundary onError={()=>setError(true)}><CarModel onReady={()=>{setReady(true);onReady()}} onSelect={onSelect} engineReady={engineReady} onEngineReady={()=>setEngineReady(true)} onEngineError={()=>setEngineError(true)}/></ModelBoundary>
    </Suspense>
   </Canvas>:<div className="scene-error" role="alert"><strong>{translate(language,supported?'loadError':'webglError')}</strong>
    {supported&&<button className="button-main" type="button" onClick={()=>window.location.reload()}>{translate(language,'retry')}</button>}</div>}
   {!ready&&!error&&supported&&<div className="viewer-wait">{translate(language,'loadDesc')}</div>}
+  {hoodOpen&&!error&&<div className={'engine-asset-status '+(engineError?'engine-error':engineReady?'engine-ready':'engine-loading')} role="status" data-testid="engine-status">{language==='fa'?(engineError?'بارگذاری مدل موتور ناموفق بود':engineReady?'مدل سه‌بعدی موتور آماده است':'در حال بارگذاری موتور سه‌بعدی…'):(engineError?'ENGINE MODEL UNAVAILABLE':engineReady?'ENGINE MODEL READY':'LOADING ENGINE ASSEMBLY…')}</div>}
   <div className="viewer-vignette" aria-hidden="true"/>
  </div>;
 }
