@@ -1,0 +1,42 @@
+name: Build, test and deploy IVI
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Download and validate licensed 3D vehicle
+        run: npm run assets
+      - name: Unit tests
+        run: npm test
+      - name: Type-check and build
+        run: npm run build
+      - name: Validate deployed bundle
+        run: |
+          test -s dist/assets/vehicle.glb
+          test -s dist/index.html
+          grep -q '/IVI/assets/' dist/index.html || grep -q '/IVI/' dist/index.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deployment
+        uses: actions/deploy-pages@v4
