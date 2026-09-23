@@ -11,6 +11,7 @@ test('desktop: 3D model, telemetry, faults and bilingual UI', async ({ page }) =
   // A real second GLB must load after the hood opens, without blanking the car.
   await page.locator('.nav-list').getByRole('button', { name: 'Engine' }).click();
   await expect(page.locator('.engine-asset-status')).toHaveText('ENGINE MODEL READY', {timeout:90_000});
+  await page.screenshot({path:'test-results/ivi-engine-bay-desktop.png'});
   await expect(page.getByRole('button', {name:/Close Hood/i})).toBeVisible();
   await page.getByRole('button', {name:/Close Hood/i}).click();
   await expect(page.locator('.engine-asset-status')).toHaveCount(0);
@@ -45,6 +46,7 @@ test('mobile: touch interface, navigation, diagnostic interactions', async ({ br
   await page.locator('.hamburger').click();
   await page.locator('.nav-list').getByRole('button', { name: 'Engine' }).click();
   await expect(page.locator('.engine-asset-status')).toHaveText('ENGINE MODEL READY', {timeout:90_000});
+  await page.screenshot({path:'test-results/ivi-engine-bay-mobile.png'});
   await page.locator('.hamburger').click();
   await expect(page.locator('.sidebar')).toHaveClass(/open/);
   await page.getByRole('button', { name: 'Diagnostics' }).click();
